@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<configuration>
+
+    <service uuid="1800">
+      <description>Generic Access Profile</description>
+
+      <characteristic uuid="2a00">
+        <properties read="true" const="true" />
+        <value>AtomBLE</value>
+      </characteristic>
+
+      <characteristic uuid="2a01">
+        <properties read="true" const="true" />
+        <value type="hex">0000</value>
+      </characteristic>
+    </service>
+
+    <service uuid="180f">
+        <description>Battery</description>
+        <characteristic uuid="2a19" id="xgatt_battery">
+            <properties read="true" />
+            <value type="user" />
+        </characteristic>
+    </service>
+
+	<service uuid="d39f1890-17eb-11e4-8c21-0800200c9a60" advertise="true">
+        <description>AtomBLE Data</description>
+		<characteristic uuid="41825a20-7402-11e4-8c21-0800200c9a62" id="xgatt_name">
+			<description>Name</description>
+            <properties read="true" const="true" notify="true" />
+            <value>Jason</value>
+        </characteristic>
+        <characteristic uuid="d93b2af0-1ea8-11e4-8c21-0800200c9a66" id="xgatt_userinput">
+			<description>UserInput</description>
+			<properties write="true" />
+            <value length="25" type="user" />
+        </characteristic>
+    </service>
+
+</configuration>
