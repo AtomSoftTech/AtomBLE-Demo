@@ -3,7 +3,7 @@
     <gatt in="gatt.xml" />
 	<device type="ble113" memory="256"/>
     <hardware in="hardware.xml" />    
-    <script in="bgdemo.bgs" />
-    <image out="out.hex" /> 
+    <script in="atombledemo.bgs" />
+    <image out="atomBLEDemo.hex" /> 
 	<config in="config.xml" />	
 </project>
