@@ -5,48 +5,67 @@ dim in_len
 dim out(26) # endpoint data out
 dim out_len
 
+# some basics :)
+# hardware_io_port_write(PORT, MASK, VALUE)
+# call hardware_io_port_config_direction(PORT, DIR) (0 = input, 1= output)
+# status update = Just sending a . for ... (like a progress bar type of thing...
+
 # System start/boot listener
 event system_boot(major,minor,patch,build,ll_version,protocol,hw)
+	
 	# Device is not connected yet
 	endpoint = system_endpoint_uart1
 	
 	# Make P0_0 and P0_4 outputs
 	call hardware_io_port_config_direction(0, 3)
-	call hardware_io_port_config_direction(1, 7)
 	
+	# Make P1_0 to P1_3 outputs
+	call hardware_io_port_config_direction(1, 7)	
 	
-	# hardware_io_port_write(PORT, MASK, VALUE)
-	# Turn P0_0 (green led) and P0_1 (blue led) off
+	# Turn OFF all misc LEDs
 	call hardware_io_port_write(1, 7, 0)
+	
+	# Turn ON P0_0 (green led) and Turn OFF P0_1 (blue led)
 	call hardware_io_port_write(0, 3, 2)
 	
+	# Send the user some text and progress via UART
 	call system_endpoint_tx(endpoint, 41, "\n\rAtomSoftTech - BLE113 Test: Booting up ")
 	call system_endpoint_set_watermarks(endpoint, 0, 0) # disable watermarks
+	
+	# status update
 	call system_endpoint_tx(endpoint, 1, ".")
 	
 	# Set advertisement interval to 20 to 30ms. Use all advertisement channels
 	call gap_set_adv_parameters(32,48,7)
-	call system_endpoint_tx(endpoint, 1, ".")
-	# Start advertisement (generic discoverable, undirected connectable)
-	call gap_set_mode(2,2)
+	
+	# status update
 	call system_endpoint_tx(endpoint, 1, ".")
 	
+	# Start advertisement (generic discoverable, undirected connectable)
+	call gap_set_mode(2,2)
+	
+	# status update
 	call system_endpoint_tx(endpoint, 1, ".")
 	call system_endpoint_tx(endpoint, 6, "done\n\r")
 end
 
 event attributes_value(connection, reason, handle, offset, value_len, value_data)
-
+	# if the incomming data is from USERINPUT characteristic
     if handle = xgatt_userinput then
+	    # Place our data in an external buffer and count (GLOBAL)
 	    out(0:value_len) = value_data(0:value_len)
         out_len = value_len
-	
+
+		# Send the data to UART with some other text
         call system_endpoint_set_watermarks(endpoint,0, 0) # disable watermarks
 		call system_endpoint_tx(endpoint, 11, "Received: [")
         call system_endpoint_tx(endpoint, out_len, out(0:out_len))
 		call system_endpoint_tx(endpoint, 3, "]\n\r")
     end if
+	
+	# if the incomming data is from LEDCONTROL characteristic
 	if handle = xgatt_ledcontrol then
+		# Turn on/off leds based on user input from LEDCONTROL 
 		call hardware_io_port_write(1, 7, value_data(0))
     end if
     
@@ -54,6 +73,7 @@ end
 
 event attclient_indicated(connection, handle)
     if handle = xgatt_userinput then
+		# Not 100% sure what these do
         call system_endpoint_set_watermarks(endpoint, 1, $ff) # set RX watermark
     end if
     
@@ -62,11 +82,14 @@ end
 event connection_status(connection, flags, address, address_type, conn_interval, timeout, latency, bonding)
 	# Device is connected.
     call system_endpoint_tx(endpoint, 17, "\n\r++ Connected ++")
+	
+	# Turn on BLUE LED
 	call hardware_io_port_write(0, 3, 3)
 end
 
 event system_endpoint_watermark_tx(curr_endpoint, size)
 
+	# if data is meant for UART send it
     if curr_endpoint = endpoint then
         call system_endpoint_set_watermarks(endpoint, $ff, 0) # disable TX watermark
         call system_endpoint_tx(endpoint, out_len, out(0:out_len))
@@ -81,5 +104,6 @@ event connection_disconnected(handle, result)
 	call gap_set_mode(gap_general_discoverable,gap_undirected_connectable)
 	call system_endpoint_tx(endpoint, 24, "\n\rDevice Disconnected!\n\r")
 
+	# Turn off BLUE LED
     call hardware_io_port_write(0, 3, 2)
 end
