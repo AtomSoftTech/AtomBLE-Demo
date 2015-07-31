@@ -30,10 +30,15 @@
             <properties read="true" const="true" notify="true" />
             <value>Jason</value>
         </characteristic>
-        <characteristic uuid="d93b2af0-1ea8-11e4-8c21-0800200c9a66" id="xgatt_userinput">
+        <characteristic uuid="d93b2af0-1ea8-11e4-8c21-0800200c9a64" id="xgatt_userinput">
 			<description>UserInput</description>
 			<properties write="true" />
             <value length="25" type="user" />
+        </characteristic>
+        <characteristic uuid="d93b2af0-1ea8-11e4-8c21-0800200c9a66" id="xgatt_ledcontrol">
+			<description>LedControl</description>
+			<properties write="true" />
+            <value length="1" type="hex">00</value>
         </characteristic>
     </service>
 

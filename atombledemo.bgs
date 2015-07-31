@@ -12,9 +12,12 @@ event system_boot(major,minor,patch,build,ll_version,protocol,hw)
 	
 	# Make P0_0 and P0_4 outputs
 	call hardware_io_port_config_direction(0, 3)
+	call hardware_io_port_config_direction(1, 7)
+	
 	
 	# hardware_io_port_write(PORT, MASK, VALUE)
 	# Turn P0_0 (green led) and P0_1 (blue led) off
+	call hardware_io_port_write(1, 7, 0)
 	call hardware_io_port_write(0, 3, 2)
 	
 	call system_endpoint_tx(endpoint, 41, "\n\rAtomSoftTech - BLE113 Test: Booting up ")
@@ -42,6 +45,9 @@ event attributes_value(connection, reason, handle, offset, value_len, value_data
 		call system_endpoint_tx(endpoint, 11, "Received: [")
         call system_endpoint_tx(endpoint, out_len, out(0:out_len))
 		call system_endpoint_tx(endpoint, 3, "]\n\r")
+    end if
+	if handle = xgatt_ledcontrol then
+		call hardware_io_port_write(1, 7, value_data(0))
     end if
     
 end
