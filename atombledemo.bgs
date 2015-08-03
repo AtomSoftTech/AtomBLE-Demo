@@ -4,26 +4,75 @@ dim in(26) # endpoint data in
 dim in_len
 dim out(26) # endpoint data out
 dim out_len
+dim leds(4)
+dim myLED 
 
 # some basics :)
 # hardware_io_port_write(PORT, MASK, VALUE)
 # call hardware_io_port_config_direction(PORT, DIR) (0 = input, 1= output)
 # status update = Just sending a . for ... (like a progress bar type of thing...
 
+procedure change_led(data)
+
+	if data = 0 then
+		if leds(0) = 0 then 
+			leds(0) = $80 
+		else 
+			leds(0) = 0
+		end if
+	end if
+
+	if data = 1 then
+		if leds(1) = 0 then
+			leds(1) = 1 
+		else 
+			leds(1) = 0
+		end if
+	end if
+	
+	if data = 2 then
+		if leds(2) = 0 then 
+			leds(2) = 2 
+		else 
+			leds(2) = 0
+		end if
+	end if
+	
+	if data = 3 then
+		if leds(3) = 0 then 
+			leds(3) = 4 
+		else 
+			leds(3) = 0
+		end if
+	end if
+	
+	call hardware_io_port_write(0, $80, leds(0))
+	call hardware_io_port_write(1, 1, leds(1))
+	call hardware_io_port_write(1, 2, leds(2))
+	call hardware_io_port_write(1, 4, leds(3))
+	
+end
+
 # System start/boot listener
 event system_boot(major,minor,patch,build,ll_version,protocol,hw)
+	
+	leds(0) = 0
+	leds(1) = 0
+	leds(2) = 0
+	leds(3) = 0
 	
 	# Device is not connected yet
 	endpoint = system_endpoint_uart1
 	
-	# Make P0_0 and P0_4 outputs
-	call hardware_io_port_config_direction(0, 3)
+	# Make P0_0 and P0_1 outputs and P0_7
+	call hardware_io_port_config_direction(0, $83)
 	
-	# Make P1_0 to P1_3 outputs
+	# Make P1_0 to P1_2 outputs  
 	call hardware_io_port_config_direction(1, 7)	
 	
 	# Turn OFF all misc LEDs
 	call hardware_io_port_write(1, 7, 0)
+	call hardware_io_port_write(0, $80, 0)
 	
 	# Turn ON P0_0 (green led) and Turn OFF P0_1 (blue led)
 	call hardware_io_port_write(0, 3, 2)
@@ -50,6 +99,8 @@ event system_boot(major,minor,patch,build,ll_version,protocol,hw)
 end
 
 event attributes_value(connection, reason, handle, offset, value_len, value_data)
+	myLED = 9
+	
 	# if the incomming data is from USERINPUT characteristic
     if handle = xgatt_userinput then
 	    # Place our data in an external buffer and count (GLOBAL)
@@ -65,11 +116,14 @@ event attributes_value(connection, reason, handle, offset, value_len, value_data
 	
 	# if the incomming data is from LEDCONTROL characteristic
 	if handle = xgatt_ledcontrol then
+
 		# Turn on/off leds based on user input from LEDCONTROL 
-		call hardware_io_port_write(1, 7, value_data(0))
+
+		call change_led(value_data(0))
     end if
-    
 end
+
+
 
 event attclient_indicated(connection, handle)
     if handle = xgatt_userinput then
